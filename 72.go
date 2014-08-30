@@ -35,7 +35,7 @@ func Same(t1, t2 *tree.Tree) bool {
     if x != y || ok1 != ok2 {
       return false
     }
-    if (ok1 && ok2) == false {
+    if !(ok1 && ok2) {
       return true
     }
   }

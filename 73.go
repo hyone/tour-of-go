@@ -24,22 +24,22 @@ func Crawl(url string, depth int, fetcher Fetcher) {
   var workers = 0
   var visitedUrls = make(map[string]bool)
 
-  ch   := make(chan Result, 10)
+  ch   := make(chan *Result, 10)
   quit := make(chan bool, 5)
 
   workers++
   visitedUrls[url] = true
-  go _Crawl(url , depth, fetcher, ch)
+  go _Crawl(url, depth, fetcher, ch)
 
   for {
     select {
     case result := <-ch:
       showResult(result)
       for _, u := range result.urls {
-        if v := visitedUrls[u]; !v {
+        if d := result.depth-1; !visitedUrls[u] && d > 0  {
           visitedUrls[u] = true
           workers++
-          go _Crawl(u, result.depth-1, fetcher, ch)
+          go _Crawl(u, d, fetcher, ch)
         }
       }
       quit <- true
@@ -51,9 +51,9 @@ func Crawl(url string, depth int, fetcher Fetcher) {
   }
 }
 
-func _Crawl(url string, depth int, fetcher Fetcher, ch chan Result) {
+func _Crawl(url string, depth int, fetcher Fetcher, ch chan *Result) {
   body, urls, err := fetcher.Fetch(url)
-  ch <- Result {
+  ch <- &Result {
     url: url,
     body: body,
     urls: urls,
@@ -62,7 +62,7 @@ func _Crawl(url string, depth int, fetcher Fetcher, ch chan Result) {
   }
 }
 
-func showResult(result Result) {
+func showResult(result *Result) {
   if result.err != nil {
     fmt.Println(result.err)
     return
